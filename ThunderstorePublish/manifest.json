@@ -1,0 +1,10 @@
+{
+    "name": "EnemiesScanner",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/kirpichyov/LC_EnemiesScannerMod",
+    "description": "Adds shop item that allows to scan the nearby enemies",
+    "dependencies": [
+        "BepInEx-BepInExPack-5.4.2100",
+		"Evaisa-LethalLib-0.13.2"
+    ]
+}
