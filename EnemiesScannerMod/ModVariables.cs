@@ -6,7 +6,6 @@ namespace EnemiesScannerMod
     {
         public static ModVariables Instance { get; private set; }
         
-        public GameObject ModNetworkManagerGameObject { get; set; }
         public AudioClip RadarScanRound { get; set; }
         public AudioClip RadarAlertSound { get; set; }
         

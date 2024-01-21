@@ -2,6 +2,5 @@
 ### Adds shop item that allows to scan the nearby enemies
 
 ### Credit
-Beta testers
-* Uncle_kobL
-* bloodangel
+Scanner model
+* Tablet by Poly by Google [CC-BY] via Poly Pizza

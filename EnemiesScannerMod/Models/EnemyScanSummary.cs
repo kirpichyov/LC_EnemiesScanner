@@ -7,23 +7,26 @@ namespace EnemiesScannerMod.Models
         public string Name { get; set; }
         public Vector3 Position { get; set; }
         public float Distance { get; set; }
-        public string Location { get; set; }
         public char UpDownIndicator { get; set; }
         public RelativeLevel RelativeLevel { get; set; }
+        public bool IsOutsideType { get; set; }
+        public DangerLevel DangerLevel { get; set; }
 
         public static EnemyScanSummary CreateFromEnemy(EnemyAI enemy, Vector3 playerPosition)
         {
-            var position = enemy.serverPosition;
+            var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
+            var distance = Vector3.Distance(position, playerPosition);
 
             return new EnemyScanSummary()
             {
                 Name = enemy.name.Replace("(Clone)", string.Empty),
                 Position = position,
-                Distance = Vector3.Distance(position, playerPosition),
-                Location = enemy.isOutside ? "OUT" : "IN",
+                Distance = distance,
                 RelativeLevel = relativeLevel,
-                UpDownIndicator = GetUpDownIndicator(relativeLevel)
+                UpDownIndicator = GetUpDownIndicator(relativeLevel),
+                IsOutsideType = enemy.enemyType.isOutsideEnemy,
+                DangerLevel = GetDangerLevel(distance),
             };
         }
 
@@ -31,6 +34,7 @@ namespace EnemiesScannerMod.Models
         {
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
+            var distance = Vector3.Distance(position, playerPosition);
 
             return new EnemyScanSummary
             {
@@ -38,10 +42,11 @@ namespace EnemiesScannerMod.Models
                     .Replace("(Clone)", string.Empty)
                     .Replace("Script", string.Empty),
                 Position = position,
-                Distance = Vector3.Distance(position, playerPosition),
-                Location = "N/A",
+                Distance = distance,
                 RelativeLevel = relativeLevel,
                 UpDownIndicator = GetUpDownIndicator(relativeLevel),
+                IsOutsideType = false,
+                DangerLevel = GetDangerLevel(distance),
             };
         }
 
@@ -74,6 +79,31 @@ namespace EnemiesScannerMod.Models
             }
 
             return RelativeLevel.Same;
+        }
+        
+        private static DangerLevel GetDangerLevel(float distance)
+        {
+            if (distance <= 8f)
+            {
+                return DangerLevel.Death;
+            }
+            
+            if (distance > 8f && distance <= 12f)
+            {
+                return DangerLevel.Danger;
+            }
+
+            if (distance > 12f && distance <= 20f)
+            {
+               return DangerLevel.Near;
+            }
+
+            if (distance > 20f && distance <= 30f)
+            {
+                return DangerLevel.Far;
+            }
+
+            return DangerLevel.TooFar;
         }
     }
 }

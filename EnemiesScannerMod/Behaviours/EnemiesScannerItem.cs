@@ -3,8 +3,8 @@ using System.Linq;
 using System.Text;
 using EnemiesScannerMod.Models;
 using EnemiesScannerMod.Utils;
-using GameNetcodeStuff;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace EnemiesScannerMod.Behaviours
@@ -52,7 +52,7 @@ namespace EnemiesScannerMod.Behaviours
             _audioSource = GetComponent<AudioSource>();
             _ledIndicator = lights.First(l => l.gameObject.name == "Indicator");
             _screenLight = lights.First(l => l.gameObject.name == "ScreenLight");
-            _ledIndicator.intensity = 1f;
+            _ledIndicator.intensity = 5f;
             _screenLight.intensity = 1f;
             _text.enabled = false;
             _scanAnimationHolder.SetActive(false);
@@ -62,19 +62,7 @@ namespace EnemiesScannerMod.Behaviours
 
         public override void ItemActivate(bool used, bool buttonDown = true)
         {
-            ModLogger.Instance.LogInfo($"used={used} | buttonDown={buttonDown}");
-            if (buttonDown)
-            {
-                if (playerHeldBy != null)
-                {
-                    ModLogger.Instance.LogInfo($"Held by {playerHeldBy.playerUsername}");
-                    isBeingUsed = !isBeingUsed;
-                    SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
-                    _screenLight.enabled = isBeingUsed;
-                    _text.enabled = isBeingUsed;
-                    _scanAnimationHolder.SetActive(isBeingUsed);
-                }
-            }
+            ItemActivateInternal(used, buttonDown, isLocal: false);
         }
 
         public override void UseUpBatteries()
@@ -111,9 +99,30 @@ namespace EnemiesScannerMod.Behaviours
         public override void Update()
         {
             base.Update();
-            if (isBeingUsed && IsDelayPass(_lastScan, 1f) && !ReferenceEquals(playerHeldBy, null))
+            if (isBeingUsed && IsDelayPass(_lastScan, 1f))
             {
-                ScanEnemies(playerHeldBy);
+                ScanEnemies();
+            }
+        }
+        
+        private void ItemActivateInternal(bool used, bool buttonDown, bool isLocal)
+        {
+            if (buttonDown)
+            {
+                if (playerHeldBy != null)
+                {
+                    ModLogger.Instance.LogInfo($"Held by {playerHeldBy.playerUsername}");
+                    isBeingUsed = !isBeingUsed;
+                    SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
+                    _screenLight.enabled = isBeingUsed;
+                    _text.enabled = isBeingUsed;
+                    _scanAnimationHolder.SetActive(isBeingUsed);
+
+                    if (!isLocal)
+                    {
+                        ItemActivateServerRpc(used, buttonDown: true);
+                    }
+                }
             }
         }
 
@@ -146,25 +155,58 @@ namespace EnemiesScannerMod.Behaviours
                 return;
             }
         }
+
+        [ServerRpc]
+        public void ItemActivateServerRpc(bool used, bool buttonDown)
+        {
+            var networkManager = base.NetworkManager;
+            if (networkManager == null || !networkManager.IsListening)
+            {
+                return;
+            }
+
+            ItemActivateClientRpc(used, buttonDown);
+        }
         
-        private void ScanEnemies(PlayerControllerB currentPlayer)
+        [ClientRpc]
+        public void ItemActivateClientRpc(bool used, bool buttonDown)
+        {
+            var networkManager = base.NetworkManager;
+            if (networkManager == null || !networkManager.IsListening)
+            {
+                return;
+            }
+
+            if (base.IsOwner)
+            {
+                return;
+            }
+
+            ItemActivateInternal(used, buttonDown, isLocal: true);
+        }
+        
+        private void ScanEnemies()
         {
             _lastScan = DateTime.UtcNow;
 
-            _audioSource.PlayOneShot(ModVariables.Instance.RadarScanRound, 0.2f);
+            _audioSource.PlayOneShot(ModVariables.Instance.RadarScanRound, 0.3f);
             
-            var playerPosition = currentPlayer.transform.position;
+            var selfPosition = transform.position;
+            var isOutside = !isInFactory;
 
             var enemyAIs = FindObjectsOfType<EnemyAI>()
                 .Where(enemy => !enemy.isEnemyDead)
-                .Select(enemy => EnemyScanSummary.CreateFromEnemy(enemy, playerPosition));
+                .Select(enemy => EnemyScanSummary.CreateFromEnemy(enemy, selfPosition));
 
             var turrets = FindObjectsOfType<Turret>()
-                .Select(enemy => EnemyScanSummary.CreateFromTurret(enemy, playerPosition));
+                .Select(enemy => EnemyScanSummary.CreateFromTurret(enemy, selfPosition));
 
             var aggregateIterable = enemyAIs.Concat(turrets);
-            var summary = aggregateIterable.OrderByDescending(s => s.Distance)
-                .Take(5)
+
+            var summary = aggregateIterable
+                .Where(enemy => isOutside ? enemy.IsOutsideType : !enemy.IsOutsideType)
+                .OrderByDescending(enemy => enemy.Distance)
+                .Take(8)
                 .ToArray();
 
             if (summary.Length == 0)
@@ -172,21 +214,27 @@ namespace EnemiesScannerMod.Behaviours
                 return;
             }
 
-            if (summary.Any(s => s.RelativeLevel == RelativeLevel.Same && s.Distance <= 10f))
+            SwitchLed(LedState.NoDanger);
+            
+            if (summary.Any(s => s.RelativeLevel == RelativeLevel.Same && s.DangerLevel is DangerLevel.Death))
             {
+                SwitchLed(LedState.Danger);
                 _audioSource.PlayOneShot(ModVariables.Instance.RadarAlertSound, 0.6f);
+            }
+            else if (summary.Any(s => s.RelativeLevel == RelativeLevel.Same && s.DangerLevel is DangerLevel.Danger))
+            {
+                SwitchLed(LedState.Warning);
             }
 
             var sb = new StringBuilder();
 
-            ModLogger.Instance.LogDebug($"Player position: {playerPosition}");
+            ModLogger.Instance.LogDebug($"Player position: {selfPosition}");
             foreach (var s in summary)
             {
                 ModLogger.Instance.LogDebug($"[SCAN] {s.Name} | {s.Distance}/{s.Position} | {s.UpDownIndicator}");
-                sb.AppendLine($"{StringUtils.GetCloseIndicator(s.Distance)} | {s.Name} | {s.Distance} | {s.UpDownIndicator}");
+                sb.AppendLine($"{StringUtils.GetCloseIndicator(s.DangerLevel)} | {s.Name} | {s.Distance:F2} | {s.UpDownIndicator}");
             }
-            
-            // TODO: Make UI instead pure text (3 images of nearby enemies) +description of distance, danger etc
+
             _text.SetText(sb.ToString());
         }
         
