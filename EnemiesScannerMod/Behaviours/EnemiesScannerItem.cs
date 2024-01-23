@@ -21,11 +21,11 @@ namespace EnemiesScannerMod.Behaviours
         
         private const string DefaultText = "No enemies nearby";
         
-        private readonly Color _noDangerColor = new Color(0.153f, 1f, 0f, 1f);
-        private readonly Color _dangerColor = new Color(1f, 0.130f, 0f, 1f);
-        private readonly Color _warningColor = new Color(1f, 0.548f, 0f, 1f);
-        private Light _ledIndicator;
-        private Light _screenLight;
+        private Light _defaultLed;
+        private Light _warningLed;
+        private Light _dangerLed;
+        private Light[] _leds;
+        
         private TextMeshProUGUI _text;
         private GameObject _scanAnimationHolder;
         private DateTime _lastScan = DateTime.MinValue;
@@ -33,13 +33,29 @@ namespace EnemiesScannerMod.Behaviours
 
         private void Awake()
         {
+            const float otherLedIntensity = 1f;
+            const float dangerLedIntensity = 2f;
+            
             var lights = GetComponentsInChildren<Light>();
             foreach (var light in lights)
             {
                 light.enabled = false;
             }
 
+            _defaultLed = lights.First(l => l.gameObject.name == "DefaultLed");
+            _defaultLed.intensity = otherLedIntensity;
+            
+            _warningLed = lights.First(l => l.gameObject.name == "WarningLed");
+            _warningLed.intensity = otherLedIntensity;
+            
+            _dangerLed = lights.First(l => l.gameObject.name == "DangerLed");
+            _dangerLed.intensity = dangerLedIntensity;
+
+            _leds = new[] { _defaultLed, _warningLed, _dangerLed };
+
             var containers = GetComponentsInChildren<Transform>();
+
+            _audioSource = GetComponent<AudioSource>();
 
             _scanAnimationHolder = containers
                 .First(t => t.gameObject.name == "ScreenCanvas")
@@ -48,14 +64,10 @@ namespace EnemiesScannerMod.Behaviours
                 .First(t => t.gameObject.name == "ScanAnimation")
                 .gameObject;
             
-            _text = GetComponentInChildren<TextMeshProUGUI>();
-            _audioSource = GetComponent<AudioSource>();
-            _ledIndicator = lights.First(l => l.gameObject.name == "Indicator");
-            _screenLight = lights.First(l => l.gameObject.name == "ScreenLight");
-            _ledIndicator.intensity = 5f;
-            _screenLight.intensity = 1f;
-            _text.enabled = false;
             _scanAnimationHolder.SetActive(false);
+            
+            _text = GetComponentInChildren<TextMeshProUGUI>();
+            _text.enabled = false;
             _text.fontSize = 16f;
             _text.SetText(DefaultText);
         }
@@ -69,7 +81,6 @@ namespace EnemiesScannerMod.Behaviours
         {
             base.UseUpBatteries();
             SwitchLed(LedState.Disabled);
-            _screenLight.enabled = false;
             _text.enabled = false;
             _scanAnimationHolder.SetActive(false);
         }
@@ -78,7 +89,6 @@ namespace EnemiesScannerMod.Behaviours
         {
             base.PocketItem();
             SwitchLed(LedState.Disabled);
-            _screenLight.enabled = false;
             _text.enabled = false;
             _scanAnimationHolder.SetActive(false);
         }
@@ -89,7 +99,6 @@ namespace EnemiesScannerMod.Behaviours
             if (isBeingUsed)
             {
                 SwitchLed(LedState.NoDanger);
-                _screenLight.enabled = true;
                 _text.enabled = true;
                 _scanAnimationHolder.SetActive(true);
                 _text.SetText(DefaultText);
@@ -114,7 +123,6 @@ namespace EnemiesScannerMod.Behaviours
                     ModLogger.Instance.LogInfo($"Held by {playerHeldBy.playerUsername}");
                     isBeingUsed = !isBeingUsed;
                     SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
-                    _screenLight.enabled = isBeingUsed;
                     _text.enabled = isBeingUsed;
                     _scanAnimationHolder.SetActive(isBeingUsed);
 
@@ -128,31 +136,42 @@ namespace EnemiesScannerMod.Behaviours
 
         private void SwitchLed(LedState ledState)
         {
+            if (isPocketed)
+            {
+                return;
+            }
+            
+            DisableLeds();
+            
             if (ledState is LedState.Disabled)
             {
-                _ledIndicator.enabled = false;
                 return;
             }
 
             if (ledState is LedState.NoDanger)
             {
-                _ledIndicator.color = _noDangerColor;
-                _ledIndicator.enabled = true;
+                _defaultLed.enabled = true;
                 return;
             }
 
             if (ledState is LedState.Warning)
             {
-                _ledIndicator.color = _warningColor;
-                _ledIndicator.enabled = true;
+                _warningLed.enabled = true;
                 return;
             }
 
             if (ledState is LedState.Danger)
             {
-                _ledIndicator.color = _dangerColor;
-                _ledIndicator.enabled = true;
+                _dangerLed.enabled = true;
                 return;
+            }
+        }
+
+        private void DisableLeds()
+        {
+            foreach (var led in _leds)
+            {
+                led.enabled = false;
             }
         }
 
@@ -206,7 +225,7 @@ namespace EnemiesScannerMod.Behaviours
             var summary = aggregateIterable
                 .Where(enemy => isOutside ? enemy.IsOutsideType : !enemy.IsOutsideType)
                 .OrderByDescending(enemy => enemy.Distance)
-                .Take(8)
+                .Take(5)
                 .ToArray();
 
             if (summary.Length == 0)

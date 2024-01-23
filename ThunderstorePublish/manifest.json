@@ -1,6 +1,6 @@
 {
     "name": "EnemiesScanner",
-    "version_number": "1.0.0",
+    "version_number": "1.0.1",
     "website_url": "https://github.com/kirpichyov/LC_EnemiesScanner",
     "description": "Adds shop item that allows to scan the nearby enemies",
     "dependencies": [
