@@ -13,7 +13,7 @@ namespace EnemiesScannerMod
     {
         private const string ModGuid = "Kirpichyov.EnemiesScanner";
         private const string ModName = "Kirpichyov's EnemiesScanner";
-        private const string ModVersion = "1.0.0";
+        private const string ModVersion = "1.0.1";
     
         public static PluginLoader Instance { get; private set; }
 
