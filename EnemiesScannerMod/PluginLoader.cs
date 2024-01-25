@@ -13,7 +13,7 @@ namespace EnemiesScannerMod
     {
         private const string ModGuid = "Kirpichyov.EnemiesScanner";
         private const string ModName = "Kirpichyov's EnemiesScanner";
-        private const string ModVersion = "1.0.1";
+        private const string ModVersion = "1.0.2";
     
         public static PluginLoader Instance { get; private set; }
 
@@ -24,6 +24,7 @@ namespace EnemiesScannerMod
             Instance = this;
             ModLogger.SetInstance(Logger);
             ModVariables.SetInstance(new ModVariables());
+            ModConfig.Init();
         
             var modAssetDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "enemies_scanner");
             var modBundle = AssetBundle.LoadFromFile(modAssetDir);
@@ -57,9 +58,11 @@ namespace EnemiesScannerMod
 
         private void InitializeSoundVariables(ref AssetBundle modBundle)
         {
-            AudioClip radarScanSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarScan.wav");
-            AudioClip radarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlert.wav");
+            AudioClip radarScanSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarScanV2.wav");
+            AudioClip radarWarningSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarWarningV2.wav");
+            AudioClip radarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlertV2.wav");
             ModVariables.Instance.RadarScanRound = radarScanSound;
+            ModVariables.Instance.RadarWarningSound = radarWarningSound;
             ModVariables.Instance.RadarAlertSound = radarAlertSound;
         }
 

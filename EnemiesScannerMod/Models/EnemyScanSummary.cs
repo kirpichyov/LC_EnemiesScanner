@@ -88,12 +88,12 @@ namespace EnemiesScannerMod.Models
                 return DangerLevel.Death;
             }
             
-            if (distance > 8f && distance <= 12f)
+            if (distance > 8f && distance <= 14f)
             {
                 return DangerLevel.Danger;
             }
 
-            if (distance > 12f && distance <= 20f)
+            if (distance > 14f && distance <= 20f)
             {
                return DangerLevel.Near;
             }
