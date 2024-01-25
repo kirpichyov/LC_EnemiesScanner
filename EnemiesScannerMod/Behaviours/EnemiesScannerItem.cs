@@ -20,6 +20,12 @@ namespace EnemiesScannerMod.Behaviours
         }
         
         private const string DefaultText = "No enemies nearby";
+
+        private readonly Type[] _excludeEnemies =
+        {
+            typeof(DocileLocustBeesAI),
+            typeof(DoublewingAI),
+        };
         
         private Light _defaultLed;
         private Light _warningLed;
@@ -207,13 +213,12 @@ namespace EnemiesScannerMod.Behaviours
         private void ScanEnemies()
         {
             _lastScan = DateTime.UtcNow;
-
-            _audioSource.PlayOneShot(ModVariables.Instance.RadarScanRound, 0.3f);
             
             var selfPosition = transform.position;
             var isOutside = !isInFactory;
 
             var enemyAIs = FindObjectsOfType<EnemyAI>()
+                .Where(enemy => !_excludeEnemies.Contains(enemy.GetType()))
                 .Where(enemy => !enemy.isEnemyDead)
                 .Select(enemy => EnemyScanSummary.CreateFromEnemy(enemy, selfPosition));
 
@@ -222,10 +227,14 @@ namespace EnemiesScannerMod.Behaviours
 
             var aggregateIterable = enemyAIs.Concat(turrets);
 
+            var outsideFilter = ModConfig.DisableOutsideFilter.Value
+                ? (Func<EnemyScanSummary, bool>)(enemy => true)
+                : enemy => isOutside ? enemy.IsOutsideType : !enemy.IsOutsideType;
+            
             var summary = aggregateIterable
-                .Where(enemy => isOutside ? enemy.IsOutsideType : !enemy.IsOutsideType)
+                .Where(outsideFilter)
                 .OrderByDescending(enemy => enemy.Distance)
-                .Take(5)
+                .Take(ModConfig.ShowTopEnemiesCountNormalized)
                 .ToArray();
 
             if (summary.Length == 0)
@@ -243,12 +252,20 @@ namespace EnemiesScannerMod.Behaviours
             else if (summary.Any(s => s.RelativeLevel == RelativeLevel.Same && s.DangerLevel is DangerLevel.Danger))
             {
                 SwitchLed(LedState.Warning);
+                _audioSource.PlayOneShot(ModVariables.Instance.RadarWarningSound, 0.5f);
+            }
+            else
+            {
+                if (ModConfig.EnablePingSound.Value)
+                {
+                    _audioSource.PlayOneShot(ModVariables.Instance.RadarScanRound, 0.3f);
+                }
             }
 
             var sb = new StringBuilder();
 
             ModLogger.Instance.LogDebug($"Player position: {selfPosition}");
-            foreach (var s in summary)
+            foreach (var s in summary.OrderBy(s => s.Distance))
             {
                 ModLogger.Instance.LogDebug($"[SCAN] {s.Name} | {s.Distance}/{s.Position} | {s.UpDownIndicator}");
                 sb.AppendLine($"{StringUtils.GetCloseIndicator(s.DangerLevel)} | {s.Name} | {s.Distance:F2} | {s.UpDownIndicator}");
