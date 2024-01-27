@@ -1,5 +1,4 @@
-﻿using System;
-using LethalLib.Modules;
+﻿using LethalLib.Modules;
 using Unity.Netcode;
 
 namespace EnemiesScannerMod
@@ -8,10 +7,12 @@ namespace EnemiesScannerMod
     {
         public static EnemiesScannerModNetworkManager Instance { get; private set; }
         
-        public NetworkVariable<int> ShopPrice = new NetworkVariable<int>(20);
-        public NetworkVariable<bool> EnableOverheat = new NetworkVariable<bool>(false);
-        public NetworkVariable<int> OverheatTime = new NetworkVariable<int>(120);
-        public NetworkVariable<int> OverheatCooldownTime = new NetworkVariable<int>(120);
+        public NetworkVariable<int> ShopPrice { get; } = new NetworkVariable<int>(20);
+        public NetworkVariable<bool> EnableOverheat { get; } = new NetworkVariable<bool>(false);
+        public NetworkVariable<int> OverheatTime { get; } = new NetworkVariable<int>(120);
+        public NetworkVariable<int> OverheatCooldownTime { get; } = new NetworkVariable<int>(120);
+        public NetworkVariable<bool> EnableScanRadiusLimit { get; } = new NetworkVariable<bool>(false);
+        public NetworkVariable<float> ScanRadiusLimit { get; } = new NetworkVariable<float>(50f);
 
         private int _shopPriceSyncValue;
         
@@ -25,6 +26,8 @@ namespace EnemiesScannerMod
                 EnableOverheat.Value = ModConfig.EnableOverheat.Value;
                 OverheatTime.Value = ModConfig.OverheatTime.Value;
                 OverheatCooldownTime.Value = ModConfig.OverheatCooldownTime.Value;
+                EnableScanRadiusLimit.Value = ModConfig.EnableScanRadiusLimit.Value;
+                ScanRadiusLimit.Value = ModConfig.ScanRadiusLimit.Value;
                 ModLogger.Instance.LogInfo("Host sending config to clients");
             }
             else

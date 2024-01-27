@@ -300,8 +300,8 @@ namespace EnemiesScannerMod.Behaviours
                 ? (Func<Turret, bool>)(enemy => true)
                 : enemy => !isOutside;
 
-            var radiusLimitFilter = ModConfig.EnableScanRadiusLimit.Value
-                ? (Func<EnemyScanSummary, bool>)(summary => summary.Distance <= ModConfig.ScanRadiusNormalized)
+            var radiusLimitFilter = EnemiesScannerModNetworkManager.Instance.EnableScanRadiusLimit.Value
+                ? (Func<EnemyScanSummary, bool>)(summary => summary.Distance <= EnemiesScannerModNetworkManager.Instance.ScanRadiusLimit.Value)
                 : summary => true;
 
             var enemyAIs = FindObjectsOfType<EnemyAI>()
