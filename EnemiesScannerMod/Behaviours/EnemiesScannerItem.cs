@@ -46,6 +46,7 @@ namespace EnemiesScannerMod.Behaviours
 
         private Canvas _screenCanvas;
         private Canvas _counterCanvas;
+        private GameObject _heatUI;
 
         private bool IsOverheat => EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value &&
                                    _heatValue >= EnemiesScannerModNetworkManager.Instance.OverheatTime.Value;
@@ -90,6 +91,7 @@ namespace EnemiesScannerMod.Behaviours
             _counterText.SetText(DefaultCounterText);
 
             _heatImage = GetComponentsInChildren<Image>().First(i => i.gameObject.name == "OverheatImageRed");
+            _heatUI = GetComponentsInChildren<RectTransform>().First(t => t.gameObject.name == "OverheatUI").gameObject;
             
             _heatValue = 0f;
             _cooldownCoroutine = null;
@@ -98,13 +100,11 @@ namespace EnemiesScannerMod.Behaviours
         public override void Start()
         {
             base.Start();
-            _heatImage.enabled = EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value;
-            _heatImage.fillAmount = 0f;
 
-            if (!EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value)
-            {
-                _heatImage.enabled = false;
-            }
+            var isOverheatEnabled = EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value;
+            _heatUI.SetActive(isOverheatEnabled);
+            _heatImage.enabled = isOverheatEnabled;
+            _heatImage.fillAmount = 0f;
         }
 
         public override void ItemActivate(bool used, bool buttonDown = true)
@@ -300,6 +300,10 @@ namespace EnemiesScannerMod.Behaviours
                 ? (Func<Turret, bool>)(enemy => true)
                 : enemy => !isOutside;
 
+            var radiusLimitFilter = ModConfig.EnableScanRadiusLimit.Value
+                ? (Func<EnemyScanSummary, bool>)(summary => summary.Distance <= ModConfig.ScanRadiusNormalized)
+                : summary => true;
+
             var enemyAIs = FindObjectsOfType<EnemyAI>()
                 .Where(enemy => !_excludeEnemies.Contains(enemy.GetType()))
                 .Where(enemy => !enemy.isEnemyDead)
@@ -310,14 +314,15 @@ namespace EnemiesScannerMod.Behaviours
                 .Where(outsideFilterTurret)
                 .Select(enemy => EnemyScanSummary.CreateFromTurret(enemy, selfPosition));
 
-            var aggregate = enemyAIs.Concat(turrets).ToArray();
+            var aggregate = enemyAIs.Concat(turrets)
+                .Where(radiusLimitFilter)
+                .ToArray();
             
             var summary = aggregate
-                .OrderByDescending(enemy => enemy.Distance)
+                .OrderBy(enemy => enemy.Distance)
                 .Take(ModConfig.ShowTopEnemiesCountNormalized)
                 .ToArray();
 
-            // TODO: Update when range introduced to consider it and use summary then
             _counterText.SetText($"{aggregate.Length}");
             
             if (summary.Length == 0)
@@ -348,7 +353,7 @@ namespace EnemiesScannerMod.Behaviours
 
             var sb = new StringBuilder();
 
-            foreach (var s in summary.Reverse())
+            foreach (var s in summary)
             {
                 ModLogger.Instance.LogDebug($"[SCAN] {s.Name} | {s.Distance}/{s.Position} | {s.UpDownIndicator}");
                 AppendScannerEntryLine(sb, s);
