@@ -8,7 +8,7 @@ namespace EnemiesScannerMod.Utils
         {
             return dangerLevel switch
             {
-                DangerLevel.Death => "<color=#ff0000>GG</color>",
+                DangerLevel.Death => "<color=#ff0000>LETHAL</color>",
                 DangerLevel.Danger => "<color=#ff6f00>DANGER</color>",
                 DangerLevel.Near => "<color=#fff200>NEAR</color>",
                 DangerLevel.Far => "<color=#ffffff>FAR</color>",

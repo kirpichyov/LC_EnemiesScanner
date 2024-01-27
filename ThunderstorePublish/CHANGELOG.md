@@ -12,3 +12,12 @@
 - Added warning sound
 - Added ability to configure the scanner
 - Warning trigger adjusted further by 2 meters
+
+## v.1.0.3
+- Added new improved scanner model by Lord Manok
+- Fixed a bug when scanner doesn't show nearest enemies and shows the furthest instead when enemies count are greater than configured limit
+- Added ability to configure the cost of the scanner
+- Added overheat feature along with configuration
+- Added ability to configure if the exact distance to the enemy should be hidden or shown
+- Added ability to configure the scanner radius
+- 'GG' label replaced with 'LETHAL'
