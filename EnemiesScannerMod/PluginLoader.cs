@@ -3,6 +3,7 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using EnemiesScannerMod.Behaviours;
+using HarmonyLib;
 using LethalLib.Modules;
 using UnityEngine;
 
@@ -13,8 +14,10 @@ namespace EnemiesScannerMod
     {
         private const string ModGuid = "Kirpichyov.EnemiesScanner";
         private const string ModName = "Kirpichyov's EnemiesScanner";
-        private const string ModVersion = "1.0.2";
+        private const string ModVersion = "1.0.3";
     
+        private readonly Harmony _harmony = new Harmony(ModGuid);
+        
         public static PluginLoader Instance { get; private set; }
 
         private void Awake()
@@ -25,17 +28,22 @@ namespace EnemiesScannerMod
             ModLogger.SetInstance(Logger);
             ModVariables.SetInstance(new ModVariables());
             ModConfig.Init();
-        
+
+            RegisterModNetworkManager();
+            
             var modAssetDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "enemies_scanner");
             var modBundle = AssetBundle.LoadFromFile(modAssetDir);
 
-            RegisterEnemiesScannerItem(ref modBundle);
+            RegisterEnemiesScannerItem(ref modBundle, ModConfig.ShopPriceNormalized);
             InitializeSoundVariables(ref modBundle);
+            
+            _harmony.PatchAll();
             
             ModLogger.Instance.LogInfo($"{ModName} loaded.");
         }
 
-        private void RegisterEnemiesScannerItem(ref AssetBundle modBundle)
+        // TODO: Investigate how to use price from server.
+        private void RegisterEnemiesScannerItem(ref AssetBundle modBundle, int scannerPrice)
         {
             Item scannerItem = modBundle.LoadAsset<Item>("Assets/EnemiesScannerModding/EnemiesScannerItem.asset");
             scannerItem.batteryUsage = 1000f;
@@ -53,17 +61,27 @@ namespace EnemiesScannerMod
             TerminalNode node = ScriptableObject.CreateInstance<TerminalNode>();
             node.clearPreviousText = true;
             node.displayText = "Allows to scan nearby enemies\n\n";
-            Items.RegisterShopItem(scannerItem, null, null, node, 20);
+            Items.RegisterShopItem(scannerItem, null, null, node, scannerPrice);
         }
 
         private void InitializeSoundVariables(ref AssetBundle modBundle)
         {
-            AudioClip radarScanSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarScanV2.wav");
-            AudioClip radarWarningSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarWarningV2.wav");
-            AudioClip radarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlertV2.wav");
-            ModVariables.Instance.RadarScanRound = radarScanSound;
-            ModVariables.Instance.RadarWarningSound = radarWarningSound;
-            ModVariables.Instance.RadarAlertSound = radarAlertSound;
+            ModVariables.Instance.RadarScanRound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarScanV2.wav");
+            ModVariables.Instance.RadarWarningSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarWarningV2.wav");
+            ModVariables.Instance.RadarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlertV2.wav");
+            ModVariables.Instance.OverheatedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/OverheatWithRobot.wav");
+            ModVariables.Instance.RebootedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/Rebooted.wav");
+        }
+
+        private void RegisterModNetworkManager()
+        {
+            var assetDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "enemiesscanner_netcodemod");
+            var bundle = AssetBundle.LoadFromFile(assetDir);
+            
+            var netManagerPrefab = bundle.LoadAsset<GameObject>("Assets/EnemiesScannerNetcode/EnemiesScannerNetworkManager.prefab");
+            netManagerPrefab.AddComponent<EnemiesScannerModNetworkManager>();
+            
+            ModVariables.Instance.ModNetworkManagerGameObject = netManagerPrefab;
         }
 
         private void PatchNetworking()

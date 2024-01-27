@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using EnemiesScannerMod.Models;
@@ -6,6 +7,7 @@ using EnemiesScannerMod.Utils;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace EnemiesScannerMod.Behaviours
 {
@@ -19,7 +21,8 @@ namespace EnemiesScannerMod.Behaviours
             Danger,
         }
         
-        private const string DefaultText = "No enemies nearby";
+        private const string DefaultScreenText = "Scan in progress...";
+        private const string DefaultCounterText = "0";
 
         private readonly Type[] _excludeEnemies =
         {
@@ -32,17 +35,27 @@ namespace EnemiesScannerMod.Behaviours
         private Light _dangerLed;
         private Light[] _leds;
         
-        private TextMeshProUGUI _text;
-        private GameObject _scanAnimationHolder;
+        private TextMeshProUGUI _screenText;
+        private TextMeshProUGUI _counterText;
         private DateTime _lastScan = DateTime.MinValue;
         private AudioSource _audioSource;
+        
+        private float _heatValue;
+        private Coroutine _cooldownCoroutine;
+        private Image _heatImage;
 
+        private Canvas _screenCanvas;
+        private Canvas _counterCanvas;
+
+        private bool IsOverheat => EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value &&
+                                   _heatValue >= EnemiesScannerModNetworkManager.Instance.OverheatTime.Value;
+        
         private void Awake()
         {
             const float otherLedIntensity = 1f;
             const float dangerLedIntensity = 2f;
             
-            var lights = GetComponentsInChildren<Light>();
+            var lights = GetComponentsInChildren<Light>(includeInactive: true);
             foreach (var light in lights)
             {
                 light.enabled = false;
@@ -59,23 +72,39 @@ namespace EnemiesScannerMod.Behaviours
 
             _leds = new[] { _defaultLed, _warningLed, _dangerLed };
 
-            var containers = GetComponentsInChildren<Transform>();
-
             _audioSource = GetComponent<AudioSource>();
 
-            _scanAnimationHolder = containers
-                .First(t => t.gameObject.name == "ScreenCanvas")
-                .gameObject
-                .GetComponentsInChildren<Transform>()
-                .First(t => t.gameObject.name == "ScanAnimation")
-                .gameObject;
+            var texts = GetComponentsInChildren<TextMeshProUGUI>();
+            var canvases = GetComponentsInChildren<Canvas>();
             
-            _scanAnimationHolder.SetActive(false);
+            _screenText = texts.First(t => t.gameObject.name == "ScreenText");
+            _screenCanvas = canvases.First(t => t.gameObject.name == "ScreenCanvas");
+            _screenCanvas.enabled = false;
+            _screenText.fontSize = 16f;
+            _screenText.SetText(DefaultScreenText);
             
-            _text = GetComponentInChildren<TextMeshProUGUI>();
-            _text.enabled = false;
-            _text.fontSize = 16f;
-            _text.SetText(DefaultText);
+            _counterText = texts.First(t => t.gameObject.name == "CounterText");
+            _counterCanvas = canvases.First(t => t.gameObject.name == "CounterCanvas");
+            _counterCanvas.enabled = false;
+            _counterText.fontSize = 16f;
+            _counterText.SetText(DefaultCounterText);
+
+            _heatImage = GetComponentsInChildren<Image>().First(i => i.gameObject.name == "OverheatImageRed");
+            
+            _heatValue = 0f;
+            _cooldownCoroutine = null;
+        }
+
+        public override void Start()
+        {
+            base.Start();
+            _heatImage.enabled = EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value;
+            _heatImage.fillAmount = 0f;
+
+            if (!EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value)
+            {
+                _heatImage.enabled = false;
+            }
         }
 
         public override void ItemActivate(bool used, bool buttonDown = true)
@@ -86,17 +115,14 @@ namespace EnemiesScannerMod.Behaviours
         public override void UseUpBatteries()
         {
             base.UseUpBatteries();
-            SwitchLed(LedState.Disabled);
-            _text.enabled = false;
-            _scanAnimationHolder.SetActive(false);
+            DisableLeds();
+            TurnOff(used: false);
         }
 
         public override void PocketItem()
         {
             base.PocketItem();
-            SwitchLed(LedState.Disabled);
-            _text.enabled = false;
-            _scanAnimationHolder.SetActive(false);
+            TurnOff(used: isBeingUsed);
         }
 
         public override void EquipItem()
@@ -105,48 +131,95 @@ namespace EnemiesScannerMod.Behaviours
             if (isBeingUsed)
             {
                 SwitchLed(LedState.NoDanger);
-                _text.enabled = true;
-                _scanAnimationHolder.SetActive(true);
-                _text.SetText(DefaultText);
+                _screenCanvas.enabled = true;
+                _counterCanvas.enabled = true;
+                _screenText.SetText(DefaultScreenText);
             }
         }
 
         public override void Update()
         {
             base.Update();
+            
+            if (IsOverheat)
+            {
+                if (isBeingUsed)
+                {
+                    _audioSource.PlayOneShot(ModVariables.Instance.OverheatedSound, 0.5f);
+                    TurnOff(used: false);
+                }
+                
+                return;
+            }
+            
             if (isBeingUsed && IsDelayPass(_lastScan, 1f))
             {
                 ScanEnemies();
+            }
+            
+            if (EnemiesScannerModNetworkManager.Instance.EnableOverheat.Value)
+            {
+                if (isBeingUsed)
+                {
+                    var newOverheatValue = Mathf.Clamp(_heatValue + Time.deltaTime, 0f, 
+                        EnemiesScannerModNetworkManager.Instance.OverheatTime.Value);
+                    SetHeat(newOverheatValue);
+                }
+                else
+                {
+                    var newOverheatValue = Mathf.Clamp(_heatValue - Time.deltaTime, 0f,
+                        EnemiesScannerModNetworkManager.Instance.OverheatTime.Value);
+                    SetHeat(newOverheatValue);
+                }
             }
         }
         
         private void ItemActivateInternal(bool used, bool buttonDown, bool isLocal)
         {
-            if (buttonDown)
+            if (!buttonDown)
             {
-                if (playerHeldBy != null)
-                {
-                    ModLogger.Instance.LogInfo($"Held by {playerHeldBy.playerUsername}");
-                    isBeingUsed = !isBeingUsed;
-                    SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
-                    _text.enabled = isBeingUsed;
-                    _scanAnimationHolder.SetActive(isBeingUsed);
-
-                    if (!isLocal)
-                    {
-                        ItemActivateServerRpc(used, buttonDown: true);
-                    }
-                }
+                return;
             }
+
+            // TODO: Do we need this check?
+            if (playerHeldBy == null)
+            {
+                return;
+            }
+           
+            isBeingUsed = !isBeingUsed;
+                    
+            if (isBeingUsed && IsOverheat)
+            {
+                _audioSource.PlayOneShot(ModVariables.Instance.OverheatedSound, 0.5f);
+                TurnOff(used: false);
+                return;
+            }
+                    
+            SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
+            _screenCanvas.enabled = isBeingUsed;
+            _counterCanvas.enabled = isBeingUsed;
+
+            if (!isLocal)
+            {
+                ItemActivateServerRpc(used, buttonDown: true);
+            }
+        }
+        
+        private void TurnOff(bool used)
+        {
+            if (!used)
+            {
+                isBeingUsed = false;
+            }
+            
+            DisableLeds();
+            _screenCanvas.enabled = false;
+            _counterCanvas.enabled = false;
         }
 
         private void SwitchLed(LedState ledState)
         {
-            if (isPocketed)
-            {
-                return;
-            }
-            
             DisableLeds();
             
             if (ledState is LedState.Disabled)
@@ -216,29 +289,40 @@ namespace EnemiesScannerMod.Behaviours
             
             var selfPosition = transform.position;
             var isOutside = !isInFactory;
+            
+            ModLogger.Instance.LogDebug($"Player position: {selfPosition}");
+
+            var outsideFilter = ModConfig.DisableOutsideFilter.Value
+                ? (Func<EnemyAI, bool>)(enemy => true)
+                : enemy => isOutside ? enemy.isOutside : !enemy.isOutside;
+            
+            var outsideFilterTurret = ModConfig.DisableOutsideFilter.Value
+                ? (Func<Turret, bool>)(enemy => true)
+                : enemy => !isOutside;
 
             var enemyAIs = FindObjectsOfType<EnemyAI>()
                 .Where(enemy => !_excludeEnemies.Contains(enemy.GetType()))
                 .Where(enemy => !enemy.isEnemyDead)
+                .Where(outsideFilter)
                 .Select(enemy => EnemyScanSummary.CreateFromEnemy(enemy, selfPosition));
 
             var turrets = FindObjectsOfType<Turret>()
+                .Where(outsideFilterTurret)
                 .Select(enemy => EnemyScanSummary.CreateFromTurret(enemy, selfPosition));
 
-            var aggregateIterable = enemyAIs.Concat(turrets);
-
-            var outsideFilter = ModConfig.DisableOutsideFilter.Value
-                ? (Func<EnemyScanSummary, bool>)(enemy => true)
-                : enemy => isOutside ? enemy.IsOutsideType : !enemy.IsOutsideType;
+            var aggregate = enemyAIs.Concat(turrets).ToArray();
             
-            var summary = aggregateIterable
-                .Where(outsideFilter)
+            var summary = aggregate
                 .OrderByDescending(enemy => enemy.Distance)
                 .Take(ModConfig.ShowTopEnemiesCountNormalized)
                 .ToArray();
 
+            // TODO: Update when range introduced to consider it and use summary then
+            _counterText.SetText($"{aggregate.Length}");
+            
             if (summary.Length == 0)
             {
+                _screenText.SetText("No enemies nearby...");
                 return;
             }
 
@@ -264,15 +348,49 @@ namespace EnemiesScannerMod.Behaviours
 
             var sb = new StringBuilder();
 
-            ModLogger.Instance.LogDebug($"Player position: {selfPosition}");
-            foreach (var s in summary.OrderBy(s => s.Distance))
+            foreach (var s in summary.Reverse())
             {
                 ModLogger.Instance.LogDebug($"[SCAN] {s.Name} | {s.Distance}/{s.Position} | {s.UpDownIndicator}");
-                sb.AppendLine($"{StringUtils.GetCloseIndicator(s.DangerLevel)} | {s.Name} | {s.Distance:F2} | {s.UpDownIndicator}");
+                AppendScannerEntryLine(sb, s);
             }
 
-            _text.SetText(sb.ToString());
+            _screenText.SetText(sb.ToString());
         }
+        
+        private void SetHeat(float newValue)
+        {
+            _heatValue = newValue;
+            var heatFillAmount = _heatValue / EnemiesScannerModNetworkManager.Instance.OverheatTime.Value;
+            _heatImage.fillAmount = Mathf.Clamp(heatFillAmount, 0f, EnemiesScannerModNetworkManager.Instance.OverheatTime.Value);
+
+            if (IsOverheat)
+            {
+                _cooldownCoroutine ??= StartCoroutine(StartCooldown());
+            }
+        }
+        
+        private IEnumerator StartCooldown()
+        {
+            yield return new WaitForSeconds(EnemiesScannerModNetworkManager.Instance.OverheatCooldownTime.Value);
+            SetHeat(0f);
+            _cooldownCoroutine = null;
+            _audioSource.PlayOneShot(ModVariables.Instance.RebootedSound, 0.5f);
+        }
+        
+        private static void AppendScannerEntryLine(StringBuilder stringBuilder, EnemyScanSummary s)
+        {
+            stringBuilder.Append($"{StringUtils.GetCloseIndicator(s.DangerLevel)} | ");
+            stringBuilder.Append($"{s.Name} | ");
+
+            if (ModConfig.EnableExactDistance.Value)
+            {
+                stringBuilder.Append($"{s.Distance:F2} | ");
+            }
+
+            stringBuilder.Append(s.UpDownIndicator);
+            stringBuilder.AppendLine();
+        }
+
         
         private static bool IsDelayPass(DateTime reference, float? customDelaySeconds = null)
         {
