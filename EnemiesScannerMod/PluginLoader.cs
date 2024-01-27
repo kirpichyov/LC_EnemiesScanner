@@ -61,6 +61,7 @@ namespace EnemiesScannerMod
             TerminalNode node = ScriptableObject.CreateInstance<TerminalNode>();
             node.clearPreviousText = true;
             node.displayText = "Allows to scan nearby enemies\n\n";
+            ModVariables.Instance.ScannerShopItem = scannerItem;
             Items.RegisterShopItem(scannerItem, null, null, node, scannerPrice);
         }
 

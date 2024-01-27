@@ -1,4 +1,6 @@
-﻿using Unity.Netcode;
+﻿using System;
+using LethalLib.Modules;
+using Unity.Netcode;
 
 namespace EnemiesScannerMod
 {
@@ -10,6 +12,8 @@ namespace EnemiesScannerMod
         public NetworkVariable<bool> EnableOverheat = new NetworkVariable<bool>(false);
         public NetworkVariable<int> OverheatTime = new NetworkVariable<int>(120);
         public NetworkVariable<int> OverheatCooldownTime = new NetworkVariable<int>(120);
+
+        private int _shopPriceSyncValue;
         
         private void Awake()
         {
@@ -23,8 +27,27 @@ namespace EnemiesScannerMod
                 OverheatCooldownTime.Value = ModConfig.OverheatCooldownTime.Value;
                 ModLogger.Instance.LogInfo("Host sending config to clients");
             }
+            else
+            {
+                _shopPriceSyncValue = ShopPrice.Value;
+            }
             
             ModLogger.Instance.LogDebug("ModNetworkManager Awake");
+        }
+
+        private void Update()
+        {
+            if (GameNetworkManager.Instance.isHostingGame)
+            {
+                return;
+            }
+
+            if (_shopPriceSyncValue != Instance.ShopPrice.Value)
+            {
+                ModLogger.Instance.LogInfo($"Shop price sync in progress. Local was {_shopPriceSyncValue} | Server is {Instance.ShopPrice.Value}");
+                _shopPriceSyncValue = Instance.ShopPrice.Value;
+                Items.UpdateShopItemPrice(ModVariables.Instance.ScannerShopItem, Instance.ShopPrice.Value);
+            }
         }
     }
 }
