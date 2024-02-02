@@ -197,8 +197,8 @@ namespace EnemiesScannerMod.Behaviours
             }
                     
             SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
-            _screenCanvas.enabled = isBeingUsed;
-            _counterCanvas.enabled = isBeingUsed;
+            _screenCanvas.enabled = isBeingUsed && !isPocketed;
+            _counterCanvas.enabled = isBeingUsed && !isPocketed;
 
             if (!isLocal)
             {
@@ -221,6 +221,11 @@ namespace EnemiesScannerMod.Behaviours
         private void SwitchLed(LedState ledState)
         {
             DisableLeds();
+
+            if (isPocketed)
+            {
+                return;
+            }
             
             if (ledState is LedState.Disabled)
             {

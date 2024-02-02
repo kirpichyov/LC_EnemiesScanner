@@ -14,7 +14,7 @@ namespace EnemiesScannerMod
     {
         private const string ModGuid = "Kirpichyov.EnemiesScanner";
         private const string ModName = "Kirpichyov's EnemiesScanner";
-        private const string ModVersion = "1.0.3";
+        private const string ModVersion = "1.0.4";
     
         private readonly Harmony _harmony = new Harmony(ModGuid);
         
@@ -46,12 +46,13 @@ namespace EnemiesScannerMod
         private void RegisterEnemiesScannerItem(ref AssetBundle modBundle, int scannerPrice)
         {
             Item scannerItem = modBundle.LoadAsset<Item>("Assets/EnemiesScannerModding/EnemiesScannerItem.asset");
-            scannerItem.batteryUsage = 1000f;
+            scannerItem.requiresBattery = true;
+            scannerItem.automaticallySetUsingPower = false;
+            scannerItem.batteryUsage = 500f; // ~8.3 minutes of 11 minutes (max duration of the round)
 
             EnemiesScannerItem itemScript = scannerItem.spawnPrefab.AddComponent<EnemiesScannerItem>();
             itemScript.grabbable = true;
             itemScript.grabbableToEnemies = true;
-            // TODO: issue, on save load scanner is charged. But without this line scanner has zero battery. 
             itemScript.insertedBattery = new Battery(false, 1f);
             itemScript.itemProperties = scannerItem;
             
