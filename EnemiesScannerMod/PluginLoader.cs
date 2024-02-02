@@ -42,13 +42,12 @@ namespace EnemiesScannerMod
             ModLogger.Instance.LogInfo($"{ModName} loaded.");
         }
 
-        // TODO: Investigate how to use price from server.
         private void RegisterEnemiesScannerItem(ref AssetBundle modBundle, int scannerPrice)
         {
             Item scannerItem = modBundle.LoadAsset<Item>("Assets/EnemiesScannerModding/EnemiesScannerItem.asset");
             scannerItem.requiresBattery = true;
             scannerItem.automaticallySetUsingPower = false;
-            scannerItem.batteryUsage = 500f; // ~8.3 minutes of 11 minutes (max duration of the round)
+            scannerItem.batteryUsage = ModConfig.BatteryCapacityNormalized;
 
             EnemiesScannerItem itemScript = scannerItem.spawnPrefab.AddComponent<EnemiesScannerItem>();
             itemScript.grabbable = true;
@@ -73,6 +72,7 @@ namespace EnemiesScannerMod
             ModVariables.Instance.RadarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlertV2.wav");
             ModVariables.Instance.OverheatedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/OverheatWithRobot.wav");
             ModVariables.Instance.RebootedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/Rebooted.wav");
+            ModVariables.Instance.NoPowerSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/NoPower.wav");
         }
 
         private void RegisterModNetworkManager()

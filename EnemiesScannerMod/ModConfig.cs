@@ -44,6 +44,9 @@ namespace EnemiesScannerMod
         private const string ScanRadiusLimit_Description =
             "Determines the max radius (in meters) for a scanner. " +
             "Radius limit option should be enabled first. Min value is 5 and max value is 2000.";
+
+        private const string BatteryCapacity_Description =
+            "Determines the battery usage (in seconds). Min value is 5 and max value is 1000.";
         
         public static void Init()
         {
@@ -57,6 +60,7 @@ namespace EnemiesScannerMod
             PluginLoader.Instance.BindConfig(ref EnableExactDistance, GeneralSectionName, "Show the exact distance to the enemy", true, EnableExactDistance_Description);
             PluginLoader.Instance.BindConfig(ref EnableScanRadiusLimit, GeneralSectionName, "Limit the scan radius to a specific value", false, EnableScanRadiusLimit_Description);
             PluginLoader.Instance.BindConfig(ref ScanRadiusLimit, GeneralSectionName, "Scan radius limit (meters)", 50f, ScanRadiusLimit_Description);
+            PluginLoader.Instance.BindConfig(ref BatteryCapacity, GeneralSectionName, "Battery capacity", 600f /*10min*/, BatteryCapacity_Description);
         }
         
         public static ConfigEntry<bool> EnablePingSound;
@@ -69,9 +73,11 @@ namespace EnemiesScannerMod
         public static ConfigEntry<bool> EnableExactDistance;
         public static ConfigEntry<bool> EnableScanRadiusLimit;
         public static ConfigEntry<float> ScanRadiusLimit;
+        public static ConfigEntry<float> BatteryCapacity;
 
         public static int ShowTopEnemiesCountNormalized => Math.Clamp(ShowTopEnemiesCount.Value, 1, 8);
         public static int ShopPriceNormalized => Math.Clamp(ShopPrice.Value, 1, 1000);
         public static float ScanRadiusNormalized => Math.Clamp(ScanRadiusLimit.Value, 5, 2000);
+        public static float BatteryCapacityNormalized => Math.Clamp(BatteryCapacity.Value, 5, 1000);
     }
 }
