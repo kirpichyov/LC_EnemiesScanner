@@ -14,6 +14,8 @@ namespace EnemiesScannerMod
         public AudioClip OverheatedSound { get; set; }
         public AudioClip RebootedSound { get; set; }
         public AudioClip NoPowerSound { get; set; }
+        public AudioClip TurnOnSound { get; set; }
+        public AudioClip TurnOffSound { get; set; }
         
         public GameObject ModNetworkManagerGameObject { get; set; }
         

@@ -189,13 +189,17 @@ namespace EnemiesScannerMod.Behaviours
             }
            
             isBeingUsed = !isBeingUsed;
-                    
+
             if (isBeingUsed && IsOverheat)
             {
                 _audioSource.PlayOneShot(ModVariables.Instance.OverheatedSound, 0.5f);
                 TurnOff(used: false);
                 return;
             }
+            
+            _audioSource.PlayOneShot(isBeingUsed
+                ? ModVariables.Instance.TurnOnSound
+                : ModVariables.Instance.TurnOffSound);
                     
             SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
             _screenCanvas.enabled = isBeingUsed && !isPocketed;

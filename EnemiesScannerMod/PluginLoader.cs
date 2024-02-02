@@ -72,7 +72,9 @@ namespace EnemiesScannerMod
             ModVariables.Instance.RadarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlertV2.wav");
             ModVariables.Instance.OverheatedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/OverheatWithRobot.wav");
             ModVariables.Instance.RebootedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/Rebooted.wav");
-            ModVariables.Instance.NoPowerSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/NoPower.wav");
+            ModVariables.Instance.NoPowerSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/OutOfBattery.ogg");
+            ModVariables.Instance.TurnOnSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/detector_radio_on.ogg");
+            ModVariables.Instance.TurnOffSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/detector_radio_off.ogg");
         }
 
         private void RegisterModNetworkManager()
