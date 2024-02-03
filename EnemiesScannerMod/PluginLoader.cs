@@ -14,7 +14,7 @@ namespace EnemiesScannerMod
     {
         private const string ModGuid = "Kirpichyov.EnemiesScanner";
         private const string ModName = "Kirpichyov's EnemiesScanner";
-        private const string ModVersion = "1.0.3";
+        private const string ModVersion = "1.0.4";
     
         private readonly Harmony _harmony = new Harmony(ModGuid);
         
@@ -42,16 +42,16 @@ namespace EnemiesScannerMod
             ModLogger.Instance.LogInfo($"{ModName} loaded.");
         }
 
-        // TODO: Investigate how to use price from server.
         private void RegisterEnemiesScannerItem(ref AssetBundle modBundle, int scannerPrice)
         {
             Item scannerItem = modBundle.LoadAsset<Item>("Assets/EnemiesScannerModding/EnemiesScannerItem.asset");
-            scannerItem.batteryUsage = 1000f;
+            scannerItem.requiresBattery = true;
+            scannerItem.automaticallySetUsingPower = false;
+            scannerItem.batteryUsage = ModConfig.BatteryCapacityNormalized;
 
             EnemiesScannerItem itemScript = scannerItem.spawnPrefab.AddComponent<EnemiesScannerItem>();
             itemScript.grabbable = true;
             itemScript.grabbableToEnemies = true;
-            // TODO: issue, on save load scanner is charged. But without this line scanner has zero battery. 
             itemScript.insertedBattery = new Battery(false, 1f);
             itemScript.itemProperties = scannerItem;
             
@@ -72,6 +72,9 @@ namespace EnemiesScannerMod
             ModVariables.Instance.RadarAlertSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/RadarAlertV2.wav");
             ModVariables.Instance.OverheatedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/OverheatWithRobot.wav");
             ModVariables.Instance.RebootedSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/Rebooted.wav");
+            ModVariables.Instance.NoPowerSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/OutOfBattery.ogg");
+            ModVariables.Instance.TurnOnSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/detector_radio_on.ogg");
+            ModVariables.Instance.TurnOffSound = modBundle.LoadAsset<AudioClip>("Assets/EnemiesScannerModding/detector_radio_off.ogg");
         }
 
         private void RegisterModNetworkManager()

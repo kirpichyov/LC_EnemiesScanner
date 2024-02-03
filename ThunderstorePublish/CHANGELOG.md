@@ -21,3 +21,9 @@
 - Added ability to configure if the exact distance to the enemy should be hidden or shown
 - Added ability to configure the scanner radius
 - 'GG' label replaced with 'LETHAL'
+
+## v.1.0.4
+- Fixed a bug when scanner lights don't turn off completely when the scanner is pocketed ([GitHub Issue](https://github.com/kirpichyov/LC_EnemiesScanner/issues/5))
+- Added ability to configure the battery capacity of the scanner
+- Updated sounds (replaced equip, pocketed, turn on and turn off sounds)
+- Added run-out-of-battery sound

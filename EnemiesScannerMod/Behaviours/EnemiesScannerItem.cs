@@ -115,6 +115,7 @@ namespace EnemiesScannerMod.Behaviours
         public override void UseUpBatteries()
         {
             base.UseUpBatteries();
+            _audioSource.PlayOneShot(ModVariables.Instance.NoPowerSound, 0.6f);
             DisableLeds();
             TurnOff(used: false);
         }
@@ -188,17 +189,21 @@ namespace EnemiesScannerMod.Behaviours
             }
            
             isBeingUsed = !isBeingUsed;
-                    
+
             if (isBeingUsed && IsOverheat)
             {
                 _audioSource.PlayOneShot(ModVariables.Instance.OverheatedSound, 0.5f);
                 TurnOff(used: false);
                 return;
             }
+            
+            _audioSource.PlayOneShot(isBeingUsed
+                ? ModVariables.Instance.TurnOnSound
+                : ModVariables.Instance.TurnOffSound);
                     
             SwitchLed(isBeingUsed ? LedState.NoDanger : LedState.Disabled);
-            _screenCanvas.enabled = isBeingUsed;
-            _counterCanvas.enabled = isBeingUsed;
+            _screenCanvas.enabled = isBeingUsed && !isPocketed;
+            _counterCanvas.enabled = isBeingUsed && !isPocketed;
 
             if (!isLocal)
             {
@@ -221,6 +226,11 @@ namespace EnemiesScannerMod.Behaviours
         private void SwitchLed(LedState ledState)
         {
             DisableLeds();
+
+            if (isPocketed)
+            {
+                return;
+            }
             
             if (ledState is LedState.Disabled)
             {
