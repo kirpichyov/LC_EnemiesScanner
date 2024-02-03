@@ -1,4 +1,4 @@
-# Enemies Scanner v1.0.3
+# Enemies Scanner v1.0.4
 ### Adds shop item that allows to scan the nearby enemies
 
 ### Configuration
@@ -9,6 +9,7 @@
 * Enable/Disable and configure the overheat
 * Show/Hide exact distance to the enemy
 * Enable/Disable and configure the scanner radius limit
+* Battery capacity
 > You can use the Thunderstore to configure the mode. Configuration files are generated after launching the game, with the mod installed, at least once.
 
 ### Notes
@@ -20,7 +21,7 @@
 | Shop price                                  | Ping sound                            |
 | Overheat (enabled/disabled, time)           | Count of the nearest enemies          |
 | Scan radius (enabled/disabled, limit value) | Scan filtering by outside enemies     |
-|                                             | Show/Hide exact distance to the enemy |
+| Battery capacity                            | Show/Hide exact distance to the enemy |
 
 
 ### Known issues

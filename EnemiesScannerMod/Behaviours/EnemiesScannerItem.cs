@@ -115,7 +115,7 @@ namespace EnemiesScannerMod.Behaviours
         public override void UseUpBatteries()
         {
             base.UseUpBatteries();
-            _audioSource.PlayOneShot(ModVariables.Instance.NoPowerSound, 0.7f);
+            _audioSource.PlayOneShot(ModVariables.Instance.NoPowerSound, 0.6f);
             DisableLeds();
             TurnOff(used: false);
         }
