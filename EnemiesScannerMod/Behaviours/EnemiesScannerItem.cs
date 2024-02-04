@@ -23,12 +23,6 @@ namespace EnemiesScannerMod.Behaviours
         
         private const string DefaultScreenText = "Scan in progress...";
         private const string DefaultCounterText = "0";
-
-        private readonly Type[] _excludeEnemies =
-        {
-            typeof(DocileLocustBeesAI),
-            typeof(DoublewingAI),
-        };
         
         private Light _defaultLed;
         private Light _warningLed;
@@ -81,7 +75,8 @@ namespace EnemiesScannerMod.Behaviours
             _screenText = texts.First(t => t.gameObject.name == "ScreenText");
             _screenCanvas = canvases.First(t => t.gameObject.name == "ScreenCanvas");
             _screenCanvas.enabled = false;
-            _screenText.fontSize = 16f;
+            _screenText.fontSize = 18f;
+            _screenText.fontStyle = FontStyles.Normal;
             _screenText.SetText(DefaultScreenText);
             
             _counterText = texts.First(t => t.gameObject.name == "CounterText");
@@ -315,14 +310,16 @@ namespace EnemiesScannerMod.Behaviours
                 : summary => true;
 
             var enemyAIs = FindObjectsOfType<EnemyAI>()
-                .Where(enemy => !_excludeEnemies.Contains(enemy.GetType()))
+                .Where(enemy => !IsExcludeCreature(enemy.GetType()))
                 .Where(enemy => !enemy.isEnemyDead)
                 .Where(outsideFilter)
                 .Select(enemy => EnemyScanSummary.CreateFromEnemy(enemy, selfPosition));
 
-            var turrets = FindObjectsOfType<Turret>()
-                .Where(outsideFilterTurret)
-                .Select(enemy => EnemyScanSummary.CreateFromTurret(enemy, selfPosition));
+            var turrets = IsScannerExcludeTurrets
+                ? Array.Empty<EnemyScanSummary>()
+                : FindObjectsOfType<Turret>()
+                    .Where(outsideFilterTurret)
+                    .Select(enemy => EnemyScanSummary.CreateFromTurret(enemy, selfPosition));
 
             var aggregate = enemyAIs.Concat(turrets)
                 .Where(radiusLimitFilter)
@@ -395,7 +392,7 @@ namespace EnemiesScannerMod.Behaviours
         private static void AppendScannerEntryLine(StringBuilder stringBuilder, EnemyScanSummary s)
         {
             stringBuilder.Append($"{StringUtils.GetCloseIndicator(s.DangerLevel)} | ");
-            stringBuilder.Append($"{s.Name} | ");
+            stringBuilder.Append($"{s.AliasName ?? s.Name} | ");
 
             if (ModConfig.EnableExactDistance.Value)
             {
@@ -406,6 +403,14 @@ namespace EnemiesScannerMod.Behaviours
             stringBuilder.AppendLine();
         }
 
+        private static bool IsScannerExcludeTurrets =>
+            EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains("turret");
+
+        private static bool IsExcludeCreature(Type type)
+        {
+            var isPresent = AssemblyCache.EnemyTypeToNameInvariant.TryGetValue(type, out var name);
+            return isPresent && EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains(name);
+        }
         
         private static bool IsDelayPass(DateTime reference, float? customDelaySeconds = null)
         {

@@ -5,6 +5,7 @@ namespace EnemiesScannerMod.Models
     internal sealed class EnemyScanSummary
     {
         public string Name { get; set; }
+        public string AliasName { get; set; }
         public Vector3 Position { get; set; }
         public float Distance { get; set; }
         public char UpDownIndicator { get; set; }
@@ -17,10 +18,12 @@ namespace EnemiesScannerMod.Models
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
             var distance = Vector3.Distance(position, playerPosition);
+            var nameSanitized = SanitizeEnemyDisplayName(enemy.name);
 
             return new EnemyScanSummary()
             {
-                Name = enemy.name.Replace("(Clone)", string.Empty),
+                Name = nameSanitized,
+                AliasName = AliasesConfig.GetAliasOrDefault(enemy.GetType(), nameSanitized),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -35,12 +38,12 @@ namespace EnemiesScannerMod.Models
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
             var distance = Vector3.Distance(position, playerPosition);
+            var nameSanitized = SanitizeEnemyDisplayName(enemy.name);
 
             return new EnemyScanSummary
             {
-                Name = enemy.name
-                    .Replace("(Clone)", string.Empty)
-                    .Replace("Script", string.Empty),
+                Name = nameSanitized,
+                AliasName = AliasesConfig.GetAliasOrDefault(enemy.GetType(), nameSanitized),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -104,6 +107,15 @@ namespace EnemiesScannerMod.Models
             }
 
             return DangerLevel.TooFar;
+        }
+
+        private static string SanitizeEnemyDisplayName(string original)
+        {
+            return original
+                .Replace("(Clone)", string.Empty)
+                .Replace("Script", string.Empty)
+                .Replace("Enemy", string.Empty)
+                .Replace("AI", string.Empty);
         }
     }
 }

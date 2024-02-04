@@ -1,7 +1,8 @@
-# Enemies Scanner v1.0.4
+# Enemies Scanner v1.0.5
 ### Adds shop item that allows to scan the nearby enemies
 
 ### Configuration
+`[EnemiesScanner.cfg]`
 * Enable scanner ping sound (enable/disable)
 * Count of the nearest enemies shown (from 1 to 8)
 * Enable/Disable scan filtering by outside enemies
@@ -10,7 +11,12 @@
 * Show/Hide exact distance to the enemy
 * Enable/Disable and configure the scanner radius limit
 * Battery capacity
+* Creatures blacklist (exclude from scanner). Technical creature names list could be found in the [Wiki](https://thunderstore.io/c/lethal-company/p/Kirpichyov/EnemiesScanner/wiki/1444-creature-technical-names/).
+
+`[aliases.json]`
+* Creature names aliases
 > You can use the Thunderstore to configure the mode. Configuration files are generated after launching the game, with the mod installed, at least once.
+> For JSON configs make sure that it's valid after editing and doesn't contain a trailing comma.
 
 ### Notes
 * The mod is required to be installed on both clients and server
@@ -22,7 +28,7 @@
 | Overheat (enabled/disabled, time)           | Count of the nearest enemies          |
 | Scan radius (enabled/disabled, limit value) | Scan filtering by outside enemies     |
 | Battery capacity                            | Show/Hide exact distance to the enemy |
-
+| Creatures blacklist                         | Creature names aliases                |
 
 ### Known issues
 - Sometimes scanned enemies are not refreshed after going inside and outside the factory. It happens when game doesn't update the corresponding property for scanner object position.

@@ -22,6 +22,9 @@
         <Reference Include="LethalLib">
           <HintPath>dlls\LethalLib.dll</HintPath>
         </Reference>
+        <Reference Include="Unity.Collections">
+          <HintPath>dlls\Unity.Collections.dll</HintPath>
+        </Reference>
         <Reference Include="Unity.Netcode.Components">
             <HintPath>dlls\Unity.Netcode.Components.dll</HintPath>
         </Reference>
@@ -52,6 +55,10 @@
         <Reference Include="UnityEngine.UIModule">
           <HintPath>dlls\UnityEngine.UIModule.dll</HintPath>
         </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 
 </Project>
