@@ -27,3 +27,10 @@
 - Added ability to configure the battery capacity of the scanner
 - Updated sounds (replaced equip, pocketed, turn on and turn off sounds)
 - Added run-out-of-battery sound
+
+## v.1.0.5
+Implement some of the suggestions from [GitHub Issue](https://github.com/kirpichyov/LC_EnemiesScanner/issues/7):
+- Reduced the model size by 18%
+- Moved heat indicator to the top right
+- Added ability to configure the scanner blacklist that allows to exclude creatures from scanner (Turret now excluded by default)
+- Added ability to configure the aliases for creature names in the scanner (Now creature names from bestiary are used instead of technical names by default)

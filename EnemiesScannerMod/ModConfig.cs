@@ -49,7 +49,9 @@ namespace EnemiesScannerMod
             "Determines the battery usage (in seconds). Min value is 5 and max value is 1000.";
 
         private const string ScannerBlackList_Description =
-            "Determines the list of enemies to exclude from scanning. Names should be separated by a semi-colon symbol. List is case-insensitive. You can find the list of supported names in readme.";
+            "Determines the list of enemies to exclude from scanning. " +
+            "Names should be separated by a semi-colon symbol. " +
+            "List is case-insensitive. You can find the list of supported technical names in the readme.";
         
         private const string ScannerBlackList_DefaultValue = "DocileLocustBees;Doublewing;Turret;";
         
