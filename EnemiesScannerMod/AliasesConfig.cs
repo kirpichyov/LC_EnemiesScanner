@@ -64,10 +64,33 @@ namespace EnemiesScannerMod
             }
         }
 
-        public static string GetAliasOrDefault(string originalName)
+        public static string GetAliasOrDefault(Type type, string name)
         {
-            var exists = ConfigObject.Config.TryGetValue(originalName.ToLowerInvariant(), out var alias);
-            return exists ? alias : null;
+            var aliasByType = GetAliasOrDefault(type);
+            if (aliasByType != null)
+            {
+                return aliasByType;
+            }
+
+            var aliasByName = GetAliasOrDefault(name);
+            return aliasByName;
+        }
+
+        public static string GetAliasOrDefault(Type type)
+        {
+            var nameByTypeExists = AssemblyCache.EnemyTypeToNameInvariant.TryGetValue(type, out var nameNormalized);
+            if (!nameByTypeExists)
+            {
+                return null;
+            }
+
+            return GetAliasOrDefault(nameNormalized);
+        }
+        
+        public static string GetAliasOrDefault(string name)
+        {
+            var aliasExists = ConfigObject.Config.TryGetValue(name.ToLowerInvariant(), out var alias);
+            return aliasExists ? alias : null;
         }
 
         private static AliasesConfigObject GetFallbackContentObject()

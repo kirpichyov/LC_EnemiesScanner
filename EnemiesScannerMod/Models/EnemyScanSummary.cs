@@ -23,7 +23,7 @@ namespace EnemiesScannerMod.Models
             return new EnemyScanSummary()
             {
                 Name = nameSanitized,
-                AliasName = AliasesConfig.GetAliasOrDefault(nameSanitized),
+                AliasName = AliasesConfig.GetAliasOrDefault(enemy.GetType(), nameSanitized),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -43,7 +43,7 @@ namespace EnemiesScannerMod.Models
             return new EnemyScanSummary
             {
                 Name = nameSanitized,
-                AliasName = AliasesConfig.GetAliasOrDefault(nameSanitized),
+                AliasName = AliasesConfig.GetAliasOrDefault(enemy.GetType(), nameSanitized),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -114,7 +114,8 @@ namespace EnemiesScannerMod.Models
             return original
                 .Replace("(Clone)", string.Empty)
                 .Replace("Script", string.Empty)
-                .Replace("Enemy", string.Empty);
+                .Replace("Enemy", string.Empty)
+                .Replace("AI", string.Empty);
         }
     }
 }

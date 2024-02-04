@@ -72,9 +72,9 @@ namespace EnemiesScannerMod
                 ModVariables.Instance.ScannerShopItem.batteryUsage = Instance.BatteryCapacity.Value;
             }
 
-            if (_scannerBlackListSyncValue != Instance.ScannerBlackList.Value)
+            if (_scannerBlackListSyncValue.Value != Instance.ScannerBlackList.Value.Value)
             {
-                ModLogger.Instance.LogInfo($"Scanner black list sync in progress. Local was {_scannerBlackListSyncValue} | Server is {Instance.ScannerBlackList.Value}");
+                ModLogger.Instance.LogInfo($"Scanner black list sync in progress. Local was {_scannerBlackListSyncValue.Value} | Server is {Instance.ScannerBlackList.Value}");
                 _scannerBlackListSyncValue = Instance.ScannerBlackList.Value;
                 ScannerBlackListNormalized = ExtractScannerBlackList(Instance.ScannerBlackList.Value.ToString());
             }
