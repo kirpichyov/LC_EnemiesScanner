@@ -28,6 +28,7 @@ namespace EnemiesScannerMod
             ModLogger.SetInstance(Logger);
             ModVariables.SetInstance(new ModVariables());
             ModConfig.Init();
+            AliasesConfig.Init();
 
             RegisterModNetworkManager();
             

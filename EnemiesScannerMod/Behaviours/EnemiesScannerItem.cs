@@ -392,7 +392,7 @@ namespace EnemiesScannerMod.Behaviours
         private static void AppendScannerEntryLine(StringBuilder stringBuilder, EnemyScanSummary s)
         {
             stringBuilder.Append($"{StringUtils.GetCloseIndicator(s.DangerLevel)} | ");
-            stringBuilder.Append($"{s.Name} | ");
+            stringBuilder.Append($"{s.AliasName ?? s.Name} | ");
 
             if (ModConfig.EnableExactDistance.Value)
             {

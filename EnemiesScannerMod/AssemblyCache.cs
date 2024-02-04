@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace EnemiesScannerMod
 {
-    public static class AssemblyCache
+    internal static class AssemblyCache
     {
         public static Dictionary<Type, string> EnemyTypeToNameInvariant { get; }
 

@@ -5,6 +5,7 @@ namespace EnemiesScannerMod.Models
     internal sealed class EnemyScanSummary
     {
         public string Name { get; set; }
+        public string AliasName { get; set; }
         public Vector3 Position { get; set; }
         public float Distance { get; set; }
         public char UpDownIndicator { get; set; }
@@ -17,10 +18,12 @@ namespace EnemiesScannerMod.Models
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
             var distance = Vector3.Distance(position, playerPosition);
+            var nameSanitized = SanitizeEnemyDisplayName(enemy.name);
 
             return new EnemyScanSummary()
             {
-                Name = SanitizeEnemyDisplayName(enemy.name),
+                Name = nameSanitized,
+                AliasName = AliasesConfig.GetAliasOrDefault(nameSanitized),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -35,10 +38,12 @@ namespace EnemiesScannerMod.Models
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
             var distance = Vector3.Distance(position, playerPosition);
+            var nameSanitized = SanitizeEnemyDisplayName(enemy.name);
 
             return new EnemyScanSummary
             {
-                Name = SanitizeEnemyDisplayName(enemy.name),
+                Name = nameSanitized,
+                AliasName = AliasesConfig.GetAliasOrDefault(nameSanitized),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
