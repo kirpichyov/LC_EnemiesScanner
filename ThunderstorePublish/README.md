@@ -1,4 +1,4 @@
-# Enemies Scanner v1.0.4
+# Enemies Scanner v1.0.5
 ### Adds shop item that allows to scan the nearby enemies
 
 ### Configuration
