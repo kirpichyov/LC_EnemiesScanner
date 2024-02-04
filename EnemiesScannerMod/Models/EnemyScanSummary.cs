@@ -20,7 +20,7 @@ namespace EnemiesScannerMod.Models
 
             return new EnemyScanSummary()
             {
-                Name = enemy.name.Replace("(Clone)", string.Empty),
+                Name = SanitizeEnemyDisplayName(enemy.name),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -38,9 +38,7 @@ namespace EnemiesScannerMod.Models
 
             return new EnemyScanSummary
             {
-                Name = enemy.name
-                    .Replace("(Clone)", string.Empty)
-                    .Replace("Script", string.Empty),
+                Name = SanitizeEnemyDisplayName(enemy.name),
                 Position = position,
                 Distance = distance,
                 RelativeLevel = relativeLevel,
@@ -104,6 +102,14 @@ namespace EnemiesScannerMod.Models
             }
 
             return DangerLevel.TooFar;
+        }
+
+        private static string SanitizeEnemyDisplayName(string original)
+        {
+            return original
+                .Replace("(Clone)", string.Empty)
+                .Replace("Script", string.Empty)
+                .Replace("Enemy", string.Empty);
         }
     }
 }

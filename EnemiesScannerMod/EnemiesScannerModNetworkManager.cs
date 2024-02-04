@@ -1,5 +1,6 @@
 ﻿using System;
 using LethalLib.Modules;
+using Unity.Collections;
 using Unity.Netcode;
 
 namespace EnemiesScannerMod
@@ -15,9 +16,12 @@ namespace EnemiesScannerMod
         public NetworkVariable<bool> EnableScanRadiusLimit { get; } = new NetworkVariable<bool>(false);
         public NetworkVariable<float> ScanRadiusLimit { get; } = new NetworkVariable<float>(50f);
         public NetworkVariable<float> BatteryCapacity { get; } = new NetworkVariable<float>(600f);
+        public NetworkVariable<FixedString512Bytes> ScannerBlackList { get; } = new NetworkVariable<FixedString512Bytes>(string.Empty);
+        public string[] ScannerBlackListNormalized { get; private set; }
 
         private int _shopPriceSyncValue;
         private float _batteryCapacitySyncValue;
+        private FixedString512Bytes _scannerBlackListSyncValue;
         
         private void Awake()
         {
@@ -32,13 +36,17 @@ namespace EnemiesScannerMod
                 EnableScanRadiusLimit.Value = ModConfig.EnableScanRadiusLimit.Value;
                 ScanRadiusLimit.Value = ModConfig.ScanRadiusNormalized;
                 BatteryCapacity.Value = ModConfig.BatteryCapacityNormalized;
+                ScannerBlackList.Value = ModConfig.ScannerBlackListNonNull;
                 ModLogger.Instance.LogInfo("Host sending config to clients");
             }
             else
             {
                 _shopPriceSyncValue = ShopPrice.Value;
                 _batteryCapacitySyncValue = BatteryCapacity.Value;
+                _scannerBlackListSyncValue = ModConfig.ScannerBlackListNonNull;
             }
+            
+            ScannerBlackListNormalized = ExtractScannerBlackList(ModConfig.ScannerBlackListNonNull);
             
             ModLogger.Instance.LogDebug("ModNetworkManager Awake");
         }
@@ -63,6 +71,18 @@ namespace EnemiesScannerMod
                 _batteryCapacitySyncValue = Instance.BatteryCapacity.Value;
                 ModVariables.Instance.ScannerShopItem.batteryUsage = Instance.BatteryCapacity.Value;
             }
+
+            if (_scannerBlackListSyncValue != Instance.ScannerBlackList.Value)
+            {
+                ModLogger.Instance.LogInfo($"Scanner black list sync in progress. Local was {_scannerBlackListSyncValue} | Server is {Instance.ScannerBlackList.Value}");
+                _scannerBlackListSyncValue = Instance.ScannerBlackList.Value;
+                ScannerBlackListNormalized = ExtractScannerBlackList(Instance.ScannerBlackList.Value.ToString());
+            }
+        }
+
+        private string[] ExtractScannerBlackList(string raw)
+        {
+            return raw.ToLowerInvariant().Split(';', StringSplitOptions.RemoveEmptyEntries);
         }
     }
 }
