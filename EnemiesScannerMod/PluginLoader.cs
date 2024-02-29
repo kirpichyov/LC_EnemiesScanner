@@ -14,7 +14,7 @@ namespace EnemiesScannerMod
     {
         private const string ModGuid = "Kirpichyov.EnemiesScanner";
         private const string ModName = "Kirpichyov's EnemiesScanner";
-        private const string ModVersion = "1.0.5";
+        private const string ModVersion = "1.0.6";
     
         private readonly Harmony _harmony = new Harmony(ModGuid);
         
