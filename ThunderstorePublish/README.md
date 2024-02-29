@@ -13,8 +13,6 @@
 * Battery capacity
 * Scanner refresh rate
 * Creatures blacklist (exclude from scanner). Technical creature names list could be found in the [Wiki](https://thunderstore.io/c/lethal-company/p/Kirpichyov/EnemiesScanner/wiki/1444-creature-technical-names/).
-If you want to set an alias or exclude mods creature, you could have a look into a console and search for a log that looks like this:
-`[Notice] Non vanilla game creature detected! You could use 'Football' name in the scanner blacklist config if you want to hide it. For alias config you could use 'FootballPref' name.`
 
 `[aliases.json]`
 * Creature names aliases

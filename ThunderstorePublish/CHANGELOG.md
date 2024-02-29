@@ -37,5 +37,5 @@ Implement some of the suggestions from [GitHub Issue](https://github.com/kirpich
 
 ## v.1.0.6
 - Added ability to blacklist the creatures from the mods [GitHub Issue](https://github.com/kirpichyov/LC_EnemiesScanner/issues/9)
-- Added console log for creatures from mods with information that includes names to exclude it from scanner or set an alias
+- Added console log for creatures from mods with information that includes names to exclude it from scanner or set an alias (see Wiki for more information)
 - Added experimental config option that allows to set the scanner refresh rate
