@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using EnemiesScannerMod.Utils;
+using UnityEngine;
 
 namespace EnemiesScannerMod.Models
 {
@@ -18,7 +19,7 @@ namespace EnemiesScannerMod.Models
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
             var distance = Vector3.Distance(position, playerPosition);
-            var nameSanitized = SanitizeEnemyDisplayName(enemy.name);
+            var nameSanitized = StringUtils.SanitizeEnemyDisplayName(enemy.name);
 
             return new EnemyScanSummary()
             {
@@ -38,7 +39,7 @@ namespace EnemiesScannerMod.Models
             var position = enemy.transform.position;
             var relativeLevel = GetRelativeLevel(position, playerPosition);
             var distance = Vector3.Distance(position, playerPosition);
-            var nameSanitized = SanitizeEnemyDisplayName(enemy.name);
+            var nameSanitized = StringUtils.SanitizeEnemyDisplayName(enemy.name);
 
             return new EnemyScanSummary
             {
@@ -107,15 +108,6 @@ namespace EnemiesScannerMod.Models
             }
 
             return DangerLevel.TooFar;
-        }
-
-        private static string SanitizeEnemyDisplayName(string original)
-        {
-            return original
-                .Replace("(Clone)", string.Empty)
-                .Replace("Script", string.Empty)
-                .Replace("Enemy", string.Empty)
-                .Replace("AI", string.Empty);
         }
     }
 }

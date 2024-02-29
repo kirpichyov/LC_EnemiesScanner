@@ -53,6 +53,10 @@ namespace EnemiesScannerMod
             "Names should be separated by a semi-colon symbol. " +
             "List is case-insensitive. You can find the list of supported technical names in the readme.";
         
+        private const string ScannerRefreshRate_Description = "Determines the refresh rate for scanner, means scan once per N seconds (where N = value from this config). " +
+                                                              "E.g. value=1 means scanner will update info once per second, value=5 means once per 5 seconds. " +
+                                                              "Min value is 0.2 and max value is 100.";
+        
         private const string ScannerBlackList_DefaultValue = "DocileLocustBees;Doublewing;Turret;";
         
         public static void Init()
@@ -69,6 +73,7 @@ namespace EnemiesScannerMod
             PluginLoader.Instance.BindConfig(ref ScanRadiusLimit, GeneralSectionName, "Scan radius limit (meters)", 50f, ScanRadiusLimit_Description);
             PluginLoader.Instance.BindConfig(ref BatteryCapacity, GeneralSectionName, "Battery capacity", 600f /*10min*/, BatteryCapacity_Description);
             PluginLoader.Instance.BindConfig(ref ScannerBlackList, GeneralSectionName, "Enemies scan black list", ScannerBlackList_DefaultValue, ScannerBlackList_Description);
+            PluginLoader.Instance.BindConfig(ref ScannerRefreshRate, ExperimentalSectionName, "Scanner refresh rate (seconds)", 1f, ScannerRefreshRate_Description);
         }
         
         public static ConfigEntry<bool> EnablePingSound;
@@ -83,11 +88,13 @@ namespace EnemiesScannerMod
         public static ConfigEntry<float> ScanRadiusLimit;
         public static ConfigEntry<float> BatteryCapacity;
         public static ConfigEntry<string> ScannerBlackList;
+        public static ConfigEntry<float> ScannerRefreshRate;
 
         public static int ShowTopEnemiesCountNormalized => Math.Clamp(ShowTopEnemiesCount.Value, 1, 8);
         public static int ShopPriceNormalized => Math.Clamp(ShopPrice.Value, 1, 1000);
         public static float ScanRadiusNormalized => Math.Clamp(ScanRadiusLimit.Value, 5, 2000);
         public static float BatteryCapacityNormalized => Math.Clamp(BatteryCapacity.Value, 5, 1000);
         public static string ScannerBlackListNonNull => ScannerBlackList.Value ?? string.Empty;
+        public static float ScannerRefreshRateNormalized => Math.Clamp(ScannerRefreshRate.Value, 0.2f, 100f);
     }
 }

@@ -34,3 +34,8 @@ Implement some of the suggestions from [GitHub Issue](https://github.com/kirpich
 - Moved heat indicator to the top right
 - Added ability to configure the scanner blacklist that allows to exclude creatures from scanner (Turret now excluded by default)
 - Added ability to configure the aliases for creature names in the scanner (Now creature names from bestiary are used instead of technical names by default)
+
+## v.1.0.6
+- Added ability to blacklist the creatures from the mods [GitHub Issue](https://github.com/kirpichyov/LC_EnemiesScanner/issues/9)
+- Added console log for creatures from mods with information that includes names to exclude it from scanner or set an alias
+- Added experimental config option that allows to set the scanner refresh rate
