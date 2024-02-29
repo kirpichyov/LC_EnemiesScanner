@@ -148,7 +148,7 @@ namespace EnemiesScannerMod.Behaviours
                 return;
             }
             
-            if (isBeingUsed && IsDelayPass(_lastScan, 1f))
+            if (isBeingUsed && IsDelayPass(_lastScan, EnemiesScannerModNetworkManager.Instance.ScannerRefreshRate.Value))
             {
                 ScanEnemies();
             }
@@ -310,7 +310,7 @@ namespace EnemiesScannerMod.Behaviours
                 : summary => true;
 
             var enemyAIs = FindObjectsOfType<EnemyAI>()
-                .Where(enemy => !IsExcludeCreature(enemy.GetType()))
+                .Where(enemy => !IsExcludeCreature(enemy))
                 .Where(enemy => !enemy.isEnemyDead)
                 .Where(outsideFilter)
                 .Select(enemy => EnemyScanSummary.CreateFromEnemy(enemy, selfPosition));
@@ -406,10 +406,31 @@ namespace EnemiesScannerMod.Behaviours
         private static bool IsScannerExcludeTurrets =>
             EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains("turret");
 
-        private static bool IsExcludeCreature(Type type)
+        private static bool IsExcludeCreature(EnemyAI enemy)
         {
+            var type = enemy.GetType();
+            
             var isPresent = AssemblyCache.EnemyTypeToNameInvariant.TryGetValue(type, out var name);
-            return isPresent && EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains(name);
+
+            if (isPresent)
+            {
+                return EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains(name);
+            }
+            
+            var isNameCached = DynamicCache.EnemyTypeToNormalizedNames.TryGetValue(type, out var savedDynamicName);
+            if (isNameCached)
+            {
+                return EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains(savedDynamicName);
+            }
+
+            var newDynamicName = StringUtils.SanitizeEnemyTypeName(type.Name);
+            DynamicCache.EnemyTypeToNormalizedNames.TryAdd(type, newDynamicName.ToLowerInvariant());
+            
+            ModLogger.Instance.LogInfo($"[Notice] Non vanilla game creature detected! " +
+                                       $"You could use '{newDynamicName}' name in the scanner blacklist config if you want to hide it. " +
+                                       $"For alias config you could use '{StringUtils.SanitizeEnemyDisplayName(enemy.name)}' name.");
+            
+            return EnemiesScannerModNetworkManager.Instance.ScannerBlackListNormalized.Contains(newDynamicName.ToLowerInvariant());
         }
         
         private static bool IsDelayPass(DateTime reference, float? customDelaySeconds = null)

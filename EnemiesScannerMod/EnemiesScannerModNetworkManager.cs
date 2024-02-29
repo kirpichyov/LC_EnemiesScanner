@@ -17,6 +17,7 @@ namespace EnemiesScannerMod
         public NetworkVariable<float> ScanRadiusLimit { get; } = new NetworkVariable<float>(50f);
         public NetworkVariable<float> BatteryCapacity { get; } = new NetworkVariable<float>(600f);
         public NetworkVariable<FixedString512Bytes> ScannerBlackList { get; } = new NetworkVariable<FixedString512Bytes>(string.Empty);
+        public NetworkVariable<float> ScannerRefreshRate { get; } = new NetworkVariable<float>(1f);
         public string[] ScannerBlackListNormalized { get; private set; }
 
         private int _shopPriceSyncValue;
@@ -37,6 +38,7 @@ namespace EnemiesScannerMod
                 ScanRadiusLimit.Value = ModConfig.ScanRadiusNormalized;
                 BatteryCapacity.Value = ModConfig.BatteryCapacityNormalized;
                 ScannerBlackList.Value = ModConfig.ScannerBlackListNonNull;
+                ScannerRefreshRate.Value = ModConfig.ScannerRefreshRateNormalized;
                 ModLogger.Instance.LogInfo("Host sending config to clients");
             }
             else

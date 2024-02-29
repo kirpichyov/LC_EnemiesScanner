@@ -20,5 +20,23 @@ namespace EnemiesScannerMod.Utils
         {
             return value ? "activated" : "disabled";
         }
+        
+        public static string SanitizeEnemyDisplayName(string original)
+        {
+            return original
+                .Replace("(Clone)", string.Empty)
+                .Replace("Script", string.Empty)
+                .Replace("Enemy", string.Empty)
+                .Replace("AI", string.Empty)
+                .Replace("Prefab", string.Empty);
+        }
+        
+        public static string SanitizeEnemyTypeName(string original)
+        {
+            return original
+                .Replace("Script", string.Empty)
+                .Replace("Enemy", string.Empty)
+                .Replace("AI", string.Empty);
+        }
     }
 }
